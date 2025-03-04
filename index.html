@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streetguesser</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+</head>
+<body>
+    <h1>Streetguesser</h1>
+    <div id="map"></div>
+    <p id="round-info">Runde: <span id="round">1</span>/20 – Punkte: <span id="score">0</span></p>
+    <input type="text" id="guess" placeholder="Straßennamen eingeben">
+    <button id="check">Prüfen</button>
+    <p id="message"></p>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

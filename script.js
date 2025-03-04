@@ -1,0 +1,78 @@
+const map = L.map('map').setView([53.6, 10.1], 14); // Bramfeld als Startpunkt
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+let streets = {};
+let currentStreet = null;
+let round = 1;
+let score = 0;
+
+// Straßen aus OSM holen, nur für Bramfeld
+async function fetchStreets() {
+    const overpassQuery = `
+        [out:json];
+        area[name="Bramfeld"]->.searchArea;
+        way["highway"](area.searchArea);
+        out geom;
+    `;
+    const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    data.elements.forEach(e => {
+        if (e.tags.name) {
+            if (!streets[e.tags.name]) {
+                streets[e.tags.name] = [];
+            }
+            streets[e.tags.name].push(...e.geometry.map(coord => [coord.lat, coord.lon]));
+        }
+    });
+
+    startRound();
+}
+
+// Neue Runde starten
+function startRound() {
+    if (round > 20) {
+        alert(`Spiel beendet! Endpunktzahl: ${score}`);
+        location.reload();
+        return;
+    }
+
+    const streetNames = Object.keys(streets);
+    currentStreet = streetNames[Math.floor(Math.random() * streetNames.length)];
+    
+    // Blaue Linie auf Karte zeichnen
+    const polyline = L.polyline(streets[currentStreet], {color: 'blue', weight: 8}).addTo(map);
+    
+    // Auf die Linie zoomen und zentrieren
+    const bounds = polyline.getBounds();
+    map.fitBounds(bounds, { padding: [20, 20] });
+    
+    document.getElementById('guess').value = "";
+    document.getElementById('message').textContent = "";
+}
+
+// Eingabe überprüfen
+document.getElementById('check').addEventListener('click', () => {
+    const guess = document.getElementById('guess').value.trim();
+    if (guess.toLowerCase() === currentStreet.toLowerCase()) {
+        score++;
+        document.getElementById('message').textContent = "Richtig!";
+    } else {
+        alert(`Falsch! Die richtige Straße war: ${currentStreet}`);
+    }
+
+    document.getElementById('round').textContent = round;
+    document.getElementById('score').textContent = score;
+    
+    round++;
+    setTimeout(() => {
+        map.eachLayer(layer => { if (layer instanceof L.Polyline) map.removeLayer(layer); });
+        startRound();
+    }, 2000);
+});
+
+fetchStreets();
